@@ -1,8 +1,8 @@
-FINAL PROJECT REPORT
-Project Title: Urban Smart Public Transit & Contactless Fare System
-Course: DPR400210 – Database Programming with Oracle Database
-Student Name: Ingabire Adeline
-Student ID: 32534
+## FINAL PROJECT REPORT
+- Project Title: Urban Smart Public Transit & Contactless Fare System
+- Course: DPR400210 – Database Programming with Oracle Database
+- Student Name: Ingabire Adeline
+- Student ID: 32534
 1. Introduction
 The Urban Smart Public Transit & Contactless Fare System is a centralized Oracle database solution designed to modernize public transportation. It automates passenger registration, contactless fare collection, fleet scheduling, and revenue management, replacing inefficient manual ticketing systems.
 2. Problem Definition

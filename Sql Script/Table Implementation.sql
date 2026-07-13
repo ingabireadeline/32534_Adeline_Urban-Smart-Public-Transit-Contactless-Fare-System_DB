@@ -1,0 +1,113 @@
+-- 1. PASSENGER Table
+CREATE TABLE PASSENGER (
+    Passenger_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    First_Name VARCHAR2(50) NOT NULL,
+    Last_Name VARCHAR2(50) NOT NULL,
+    Phone VARCHAR2(15) UNIQUE NOT NULL,
+    Email VARCHAR2(100) UNIQUE,
+    Registration_Date DATE DEFAULT SYSDATE
+);
+
+-- 2. SMART_CARD Table
+CREATE TABLE SMART_CARD (
+    Card_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Passenger_ID NUMBER NOT NULL,
+    Card_Number VARCHAR2(20) UNIQUE NOT NULL,
+    Issue_Date DATE DEFAULT SYSDATE,
+    Balance NUMBER(10,2) DEFAULT 0 CHECK (Balance >= 0),
+    Status VARCHAR2(10) DEFAULT 'ACTIVE' CHECK (Status IN ('ACTIVE', 'BLOCKED', 'EXPIRED')),
+    CONSTRAINT fk_card_passenger FOREIGN KEY (Passenger_ID) REFERENCES PASSENGER(Passenger_ID) ON DELETE CASCADE
+);
+
+-- 3. BUS Table
+CREATE TABLE BUS (
+    Bus_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Bus_Number VARCHAR2(20) UNIQUE NOT NULL,
+    Capacity NUMBER CHECK (Capacity > 0),
+    Model VARCHAR2(50) NOT NULL,
+    Status VARCHAR2(15) DEFAULT 'ACTIVE' CHECK (Status IN ('ACTIVE', 'MAINTENANCE'))
+);
+
+-- 4. DRIVER Table
+CREATE TABLE DRIVER (
+    Driver_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    First_Name VARCHAR2(50) NOT NULL,
+    Last_Name VARCHAR2(50) NOT NULL,
+    License_Number VARCHAR2(30) UNIQUE NOT NULL,
+    Phone VARCHAR2(15) UNIQUE NOT NULL
+);
+
+-- 5. ROUTE Table
+CREATE TABLE ROUTE (
+    Route_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Route_Name VARCHAR2(100) NOT NULL,
+    Start_Location VARCHAR2(100) NOT NULL,
+    End_Location VARCHAR2(100) NOT NULL,
+    Base_Fare NUMBER(10,2) CHECK (Base_Fare > 0)
+);
+
+-- 6. SCHEDULE Table
+CREATE TABLE SCHEDULE (
+    Schedule_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Route_ID NUMBER NOT NULL,
+    Bus_ID NUMBER NOT NULL,
+    Driver_ID NUMBER NOT NULL,
+    Departure_Time TIMESTAMP NOT NULL,
+    Arrival_Time TIMESTAMP NOT NULL,
+    Schedule_Date DATE NOT NULL,
+    CONSTRAINT fk_schedule_route FOREIGN KEY (Route_ID) REFERENCES ROUTE(Route_ID),
+    CONSTRAINT fk_schedule_bus FOREIGN KEY (Bus_ID) REFERENCES BUS(Bus_ID),
+    CONSTRAINT fk_schedule_driver FOREIGN KEY (Driver_ID) REFERENCES DRIVER(Driver_ID),
+    CONSTRAINT chk_schedule_time CHECK (Arrival_Time > Departure_Time)
+);
+
+-- 7. TRANSACTION_RECORD Table
+CREATE TABLE TRANSACTION_RECORD (
+    Transaction_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Card_ID NUMBER NOT NULL,
+    Schedule_ID NUMBER,
+    Amount NUMBER(10,2) NOT NULL,
+    Transaction_Date TIMESTAMP DEFAULT SYSTIMESTAMP,
+    Transaction_Type VARCHAR2(20) CHECK (Transaction_Type IN ('FARE_DEDUCTION', 'RECHARGE', 'REFUND')),
+    CONSTRAINT fk_trans_card FOREIGN KEY (Card_ID) REFERENCES SMART_CARD(Card_ID),
+    CONSTRAINT fk_trans_schedule FOREIGN KEY (Schedule_ID) REFERENCES SCHEDULE(Schedule_ID)
+);
+
+-- 8. PUBLIC_HOLIDAY Table
+CREATE TABLE PUBLIC_HOLIDAY (
+    Holiday_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Holiday_Name VARCHAR2(100) NOT NULL,
+    Holiday_Date DATE UNIQUE NOT NULL
+);
+
+-- 9. AUDIT_LOG Table
+CREATE TABLE AUDIT_LOG (
+    Log_ID NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Table_Name VARCHAR2(50) NOT NULL,
+    Action_Type VARCHAR2(10) CHECK (Action_Type IN ('INSERT', 'UPDATE', 'DELETE')),
+    User_Name VARCHAR2(50) NOT NULL,
+    Action_Date TIMESTAMP DEFAULT SYSTIMESTAMP,
+    Old_Value VARCHAR2(4000),
+    New_Value VARCHAR2(4000)
+);
+
+-- Sample Data Insertion
+INSERT INTO PASSENGER (First_Name, Last_Name, Phone, Email) VALUES ('John', 'Doe', '0788123456', 'john.doe@email.com');
+INSERT INTO PASSENGER (First_Name, Last_Name, Phone, Email) VALUES ('Jane', 'Smith', '0789654321', 'jane.smith@email.com');
+
+INSERT INTO SMART_CARD (Passenger_ID, Card_Number, Balance) VALUES (1, 'SC-10001', 50.00);
+INSERT INTO SMART_CARD (Passenger_ID, Card_Number, Balance) VALUES (2, 'SC-10002', 20.00);
+
+INSERT INTO BUS (Bus_Number, Capacity, Model) VALUES ('BUS-001', 50, 'Toyota Coaster');
+INSERT INTO BUS (Bus_Number, Capacity, Model) VALUES ('BUS-002', 60, 'Isuzu NQR');
+
+INSERT INTO DRIVER (First_Name, Last_Name, License_Number, Phone) VALUES ('Michael', 'Brown', 'DL-998877', '0788000000');
+
+INSERT INTO ROUTE (Route_Name, Start_Location, End_Location, Base_Fare) VALUES ('Route A', 'Downtown', 'Airport', 5.00);
+
+INSERT INTO SCHEDULE (Route_ID, Bus_ID, Driver_ID, Departure_Time, Arrival_Time, Schedule_Date) 
+VALUES (1, 1, 1, TO_TIMESTAMP('2026-07-15 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2026-07-15 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2026-07-15', 'YYYY-MM-DD'));
+
+INSERT INTO PUBLIC_HOLIDAY (Holiday_Name, Holiday_Date) VALUES ('Independence Day', TO_DATE('2026-07-01', 'YYYY-MM-DD'));
+
+COMMIT;
